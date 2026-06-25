@@ -1,0 +1,81 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --border: #272b36;
+  --text: #e6e8ec;
+  --muted: #9aa1ad;
+  --accent: #6366f1;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+header.top {
+  display: flex; align-items: baseline; gap: 20px;
+  border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 22px;
+}
+header.top h1 { font-size: 18px; margin: 0; }
+header.top nav a { margin-right: 16px; color: var(--muted); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+.card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+}
+.card .n { font-size: 28px; font-weight: 700; }
+.card .l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+
+h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 28px 0 10px; }
+
+table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; }
+tr:last-child td { border-bottom: none; }
+
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); }
+.badge.ok { color: var(--ok); border-color: var(--ok); }
+.badge.warn { color: var(--warn); border-color: var(--warn); }
+.badge.bad { color: var(--bad); border-color: var(--bad); }
+
+.q { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.q .meta { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+.q form { display: flex; gap: 8px; margin-top: 10px; }
+.q input[type=text] { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 7px 10px; }
+.q button { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+.empty { color: var(--muted); padding: 16px 0; }
+
+main.auth { max-width: 460px; }
+.auth-form { display: flex; flex-direction: column; gap: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }
+.auth-form input, .auth-form textarea, .auth-form select { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 10px; font: inherit; }
+.auth-form button { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; }
+.auth-form button:disabled { opacity: .6; cursor: default; }
+.error { color: var(--bad); font-size: 13px; margin: 0; }
+
+/* ── Medium thread viewer (read-only) ──────────────────────────────────────── */
+.medium { display: grid; grid-template-columns: 230px 1fr; gap: 14px; align-items: start; }
+.thread-list { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px; max-height: calc(100vh - 200px); overflow: auto; }
+.thread-list ul { list-style: none; padding: 0; margin: 0; }
+.thread-list li a { display: block; padding: 8px; border-radius: 6px; color: var(--text); }
+.thread-list li.active a, .thread-list li a:hover { background: var(--bg); text-decoration: none; }
+.thread-list .t-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thread-list .t-meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.thread { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 200px); overflow-y: auto; }
+.bubble .who { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+.bubble .text { white-space: pre-wrap; line-height: 1.5; }
+.bubble.user { align-self: flex-end; max-width: 80%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+.bubble.assistant { align-self: flex-start; max-width: 85%; }

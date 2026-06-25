@@ -1,0 +1,25 @@
+{
+  "name": "eliteflow-nebula",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Containerized orchestration platform for the EliteFlow Nebula persona team.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "migrate": "npm run migrate --workspace @eliteflow/db",
+    "seed": "npm run seed --workspace @eliteflow/db",
+    "orchestrator": "npm run start --workspace @eliteflow/orchestrator",
+    "run-cycle": "npm run run-cycle --workspace @eliteflow/orchestrator",
+    "medium": "npm run medium --workspace @eliteflow/orchestrator",
+    "web": "npm run dev --workspace @eliteflow/web",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "license": "UNLICENSED"
+}

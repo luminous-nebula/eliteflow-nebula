@@ -1,0 +1,21 @@
+appId: com.eliteflow.nebula.installer
+productName: EliteFlow Nebula Installer
+
+directories:
+  output: release
+
+# Bundle the compiled main/preload, the renderer assets, and the manifest.
+files:
+  - dist/**/*
+  - public/**/*
+  - package.json
+
+# Local-Docker first (ADR-0002 D4): a Windows NSIS installer the operator double-clicks.
+win:
+  target:
+    - nsis
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true

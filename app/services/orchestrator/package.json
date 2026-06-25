@@ -1,0 +1,26 @@
+{
+  "name": "@eliteflow/orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "run-cycle": "tsx src/run-cycle.ts",
+    "medium": "tsx src/medium-cli.ts",
+    "permission-tool": "tsx src/permission-tool.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eliteflow/db": "*",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "dotenv": "^16.4.7",
+    "node-cron": "^3.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'" />
+  <title>EliteFlow Nebula Installer</title>
+  <style>
+    :root { --bg:#0f1115; --panel:#171a21; --border:#272b36; --text:#e6e8ec; --muted:#9aa1ad; --accent:#6366f1; --ok:#34d399; --warn:#fbbf24; --bad:#f87171; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 ui-sans-serif, system-ui, Segoe UI, Roboto, sans-serif; padding:24px; }
+    h1 { font-size:19px; margin:0; }
+    h2 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 12px; }
+    .sub { color:var(--muted); margin:2px 0 18px; font-size:13px; }
+    .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:14px; }
+    .row { display:flex; gap:10px; align-items:flex-end; margin-bottom:10px; }
+    label { display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--muted); flex:1; }
+    input, select { background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:8px 10px; font:inherit; }
+    button { background:var(--accent); color:#fff; border:none; border-radius:6px; padding:9px 16px; cursor:pointer; font:inherit; }
+    button.ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+    button:disabled { opacity:.5; cursor:default; }
+    .actions { display:flex; justify-content:space-between; margin-top:14px; }
+    .badge { display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); }
+    .badge.ok { color:var(--ok); border-color:var(--ok); } .badge.bad { color:var(--bad); border-color:var(--bad); } .badge.warn { color:var(--warn); border-color:var(--warn); }
+    .note { color:var(--muted); font-size:12px; }
+    .err { color:var(--bad); font-size:13px; white-space:pre-wrap; }
+    pre.log { background:#0b0d11; border:1px solid var(--border); border-radius:8px; padding:12px; height:240px; overflow:auto; font:12px/1.45 ui-monospace, Consolas, monospace; white-space:pre-wrap; margin:0; }
+    .choice { display:flex; gap:10px; margin-bottom:10px; }
+    .choice button { flex:1; text-align:left; }
+    .hidden { display:none; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .pick { display:flex; gap:8px; align-items:flex-end; }
+    .pick label { flex:1; }
+  </style>
+</head>
+<body>
+  <header style="display:flex;justify-content:space-between;align-items:baseline">
+    <h1>EliteFlow Nebula — Installer</h1>
+    <span id="step-indicator" class="note"></span>
+  </header>
+  <p class="sub">GUI setup &amp; control (ADR-0002 D4) · local-Docker first</p>
+
+  <!-- Mode -->
+  <section id="step-mode" class="panel hidden">
+    <h2>Start</h2>
+    <div class="pick">
+      <label>EliteFlow app folder (holds infra/docker-compose.yml)
+        <input id="app-dir" type="text" />
+      </label>
+      <button class="ghost" id="pick-app-dir">Browse…</button>
+    </div>
+    <div id="mode-detect" class="note" style="margin:10px 0"></div>
+    <div class="choice">
+      <button id="mode-fresh">Fresh install</button>
+      <button id="mode-update" class="ghost">Update existing</button>
+    </div>
+    <button id="mode-panel" class="ghost hidden">Open control panel →</button>
+  </section>
+
+  <!-- Config -->
+  <section id="step-config" class="panel hidden">
+    <h2>Configuration</h2>
+    <div class="row"><label>Project name<input id="c-projectName" type="text" /></label></div>
+    <div class="pick"><label>Workspace path (instruction/, persona/, database/)<input id="c-workspacePath" type="text" /></label><button class="ghost" id="pick-workspace">Browse…</button></div>
+    <div class="pick"><label>Product repo (personas generate/edit here)<input id="c-sourceRepoPath" type="text" /></label><button class="ghost" id="pick-source">Browse…</button></div>
+    <div class="grid2">
+      <label>Database password<input id="c-postgresPassword" type="text" /></label>
+      <label>Claude model<input id="c-claudeModel" type="text" /></label>
+      <label>Postgres host port<input id="c-postgresPort" type="text" /></label>
+      <label>Web UI port<input id="c-webPort" type="text" /></label>
+      <label>Timezone<input id="c-timezone" type="text" /></label>
+      <label>Work-cycle cron (blank = on-demand)<input id="c-cycleCron" type="text" /></label>
+    </div>
+    <div class="actions"><button class="ghost" data-back="step-mode">← Back</button><button data-next="step-cred">Next →</button></div>
+  </section>
+
+  <!-- Credential -->
+  <section id="step-cred" class="panel hidden">
+    <h2>Claude credential</h2>
+    <div class="row"><label>Auth method
+      <select id="c-authKind"><option value="oauth_token">Subscription token (claude setup-token)</option><option value="api_key">Anthropic API key</option></select>
+    </label></div>
+    <div id="oauth-block">
+      <div class="row"><button id="claude-login">Login with Claude</button><span class="note" style="flex:1">Spawns <code>claude setup-token</code> (browser OAuth) and captures the token.</span></div>
+      <div class="row"><label>OAuth token (captured, or paste manually)<input id="c-oauthToken" type="text" /></label></div>
+      <pre class="log" id="claude-log" style="height:120px"></pre>
+    </div>
+    <div id="apikey-block" class="hidden">
+      <div class="row"><label>Anthropic API key<input id="c-apiKey" type="text" placeholder="sk-ant-..." /></label></div>
+    </div>
+    <div class="row"><label>Antigravity token (optional — stored for a future backend, unused now)<input id="c-antigravityToken" type="text" /></label></div>
+    <div class="actions"><button class="ghost" data-back="step-config">← Back</button><button id="cred-next">Next →</button></div>
+  </section>
+
+  <!-- Data (update only) -->
+  <section id="step-data" class="panel hidden">
+    <h2>Existing data</h2>
+    <p class="note">You are updating an existing install. Keep the database, or wipe it (the next start re-migrates and re-seeds from the workspace).</p>
+    <div class="choice">
+      <button id="data-keep">Keep data</button>
+      <button id="data-clean" class="ghost">Clean wipe (down -v)</button>
+    </div>
+    <div class="actions"><button class="ghost" data-back="step-cred">← Back</button><button data-next="step-run">Next →</button></div>
+  </section>
+
+  <!-- Review + run -->
+  <section id="step-run" class="panel hidden">
+    <h2>Install</h2>
+    <div id="run-summary" class="note" style="margin-bottom:10px"></div>
+    <div id="run-errors" class="err"></div>
+    <div class="row"><button id="run-start">Write .env &amp; start stack</button><span id="run-status" class="note"></span></div>
+    <pre class="log" id="compose-log"></pre>
+    <div class="actions"><button class="ghost" data-back="step-cred">← Back</button><button id="run-done" class="hidden" data-next="panel">Continue →</button></div>
+  </section>
+
+  <!-- Control panel -->
+  <section id="panel" class="panel hidden">
+    <h2>Control panel</h2>
+    <div class="row" style="flex-wrap:wrap">
+      <button id="p-start">Start</button>
+      <button id="p-stop" class="ghost">Stop</button>
+      <button id="p-clean" class="ghost">Clean wipe</button>
+      <button id="p-dashboard" class="ghost">Open dashboard</button>
+      <button id="p-logs" class="ghost">Refresh logs</button>
+      <button id="p-reconfigure" class="ghost">Reconfigure</button>
+    </div>
+    <div id="docker-line" class="note" style="margin:6px 0"></div>
+    <pre class="log" id="panel-log"></pre>
+  </section>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+name: eliteflow-nebula
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: apply schema migrations, then seed from the mounted workspace CSVs.
+  migrate:
+    build:
+      context: ..
+      dockerfile: infra/orchestrator.Dockerfile
+    env_file: ../.env
+    environment:
+      WORKSPACE_PATH: /workspace
+      SEED_DB_PATH: /workspace/database
+    volumes:
+      - "${WORKSPACE_PATH}:/workspace:ro"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "-c", "npm run migrate -w @eliteflow/db && npm run seed -w @eliteflow/db"]
+    restart: "no"
+
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: infra/orchestrator.Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      WORKSPACE_PATH: /workspace
+      SOURCE_REPO_PATH: /repo
+    volumes:
+      - "${WORKSPACE_PATH}:/workspace"
+      - "${SOURCE_REPO_PATH}:/repo"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/web.Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
