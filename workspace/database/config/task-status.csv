@@ -1,0 +1,8 @@
+Status,Sort Order,Description
+backlog,1,Identified but not yet scheduled
+planned,2,Scheduled into a phase
+in-progress,3,Actively being worked on
+blocked,4,Waiting on a dependency
+review,5,Awaiting review or approval
+done,6,Completed and accepted
+archived,7,Superseded and moved to archive

@@ -1,0 +1,18 @@
+Persona ID,Persona Name,Role ID,Team ID,Status,Origin,Persona File
+singularity-nebula,Singularity Nebula,orchestrator,tier-0,inactive,Claude Code CLI,persona/tier-0/singularity-nebula/singularity-nebula.md
+giga-nebula,Giga Nebula,executive-consultant,executive,active,Antigravity Project,persona/executive/giga-nebula/giga-nebula.md
+carina-nebula,Carina Nebula,executive-consultant,executive,active,Claude Cowork Project,persona/executive/carina-nebula/carina-nebula.md
+vela-nebula,Vela Nebula,gtm-advisor,revenue,active,Claude Cowork Project,persona/revenue/vela-nebula/vela-nebula.md
+orion-nebula,Orion Nebula,market-researcher,revenue,active,Antigravity Project,persona/revenue/orion-nebula/orion-nebula.md
+pulsar-nebula,Pulsar Nebula,marketing-lead,revenue,active,Claude Cowork Project,persona/revenue/pulsar-nebula/pulsar-nebula.md
+sirius-nebula,Sirius Nebula,sales-lead,revenue,active,Claude Cowork Project,persona/revenue/sirius-nebula/sirius-nebula.md
+mensa-nebula,Mensa Nebula,engineering-manager,production,active,Claude Cowork Project,persona/production/mensa-nebula/mensa-nebula.md
+cygnus-nebula,Cygnus Nebula,software-architect,production,active,Claude Cowork Project,persona/production/cygnus-nebula/cygnus-nebula.md
+chronos-nebula,Chronos Nebula,devops-engineer,production,active,Claude Code CLI,persona/production/chronos-nebula/chronos-nebula.md
+pictor-nebula,Pictor Nebula,product-designer,production,active,Claude Cowork Project,persona/production/pictor-nebula/pictor-nebula.md
+daedalus-nebula,Daedalus Nebula,software-engineer,production,inactive,Claude Cowork Project,persona/production/daedalus-nebula/daedalus-nebula.md
+doradus-nebula,Doradus Nebula,code-reviewer,production,inactive,Antigravity Project,persona/production/doradus-nebula/doradus-nebula.md
+quasar-nebula,Quasar Nebula,qa-engineer,production,inactive,Antigravity Project,persona/production/quasar-nebula/quasar-nebula.md
+quadrans-nebula,Quadrans Nebula,automation-engineer,production,inactive,Claude Cowork Project,persona/production/quadrans-nebula/quadrans-nebula.md
+hephaestus-nebula,Hephaestus Nebula,unified-engineer,production,active,Claude Code CLI,persona/production/hephaestus-nebula/hephaestus-nebula.md
+coeus-nebula,Coeus Nebula,unified-reviewer,production,active,Antigravity Project,persona/production/coeus-nebula/coeus-nebula.md

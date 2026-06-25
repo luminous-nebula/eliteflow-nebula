@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentFlow Nebula Database Schema",
+  "version": "2.0.0",
+  "description": "Describes every CSV table in /database. CSV tables are the single source of truth for structured (tabular) data. Narrative content (identities, instructions, workflows) lives in markdown files and is referenced from these tables via File / Folder / Ref columns. Conversely, instruction/instruction.md tells each persona which tables to read.",
+  "conventions": {
+    "format": "CSV with a header row; UTF-8; comma-separated",
+    "column-headers": "Title Case With Spaces - every word capitalized, separated by single spaces (e.g. 'Assignee Persona ID'). Header text only.",
+    "id-values": "Cell values in '* ID' columns are kebab-case, lowercase, no spaces, unique within their table",
+    "dates": "ISO 8601 (YYYY-MM-DD)",
+    "file-refs": "Columns whose header ends in 'File', 'Folder', or 'Ref' hold workspace-relative paths to markdown files or folders"
+  },
+  "tables": {
+    "config/config.csv": {
+      "purpose": "Application and project-level key/value configuration (e.g., workflow-name) written by setup",
+      "columns": [
+        "Property",
+        "Value"
+      ],
+      "primary-key": "Property"
+    },
+    "config/cicd-config.csv": {
+      "purpose": "Pipeline configuration parameters, infrastructure targets, and deployment strategies.",
+      "columns": [
+        "Property",
+        "Value"
+      ],
+      "primary-key": "Property"
+    },
+    "config/persona-status.csv": {
+      "purpose": "Enumeration of allowed persona statuses",
+      "columns": [
+        "Status",
+        "Description"
+      ],
+      "primary-key": "Status"
+    },
+    "config/task-status.csv": {
+      "purpose": "Enumeration of allowed task statuses and their order",
+      "columns": [
+        "Status",
+        "Sort Order",
+        "Description"
+      ],
+      "primary-key": "Status"
+    },
+    "config/bug-severity.csv": {
+      "purpose": "Enumeration of bug severities (impact) and their target response",
+      "columns": [
+        "Severity",
+        "Sort Order",
+        "Description",
+        "Target Response"
+      ],
+      "primary-key": "Severity"
+    },
+    "config/bug-status.csv": {
+      "purpose": "Enumeration of allowed bug statuses and their order",
+      "columns": [
+        "Status",
+        "Sort Order",
+        "Description"
+      ],
+      "primary-key": "Status"
+    },
+    "config/day-of-week.csv": {
+      "purpose": "Calendar lookup for day names",
+      "columns": [
+        "Day No",
+        "Day Of Week",
+        "Short"
+      ],
+      "primary-key": "Day No"
+    },
+    "config/month.csv": {
+      "purpose": "Calendar lookup for month names",
+      "columns": [
+        "Month No",
+        "Month",
+        "Short"
+      ],
+      "primary-key": "Month No"
+    },
+    "persona/team.csv": {
+      "purpose": "Functional tiers that group personas",
+      "columns": [
+        "Team ID",
+        "Team",
+        "Tier Order",
+        "Description"
+      ],
+      "primary-key": "Team ID"
+    },
+    "persona/role.csv": {
+      "purpose": "Roles a persona can hold; each role belongs to one team",
+      "columns": [
+        "Role ID",
+        "Role",
+        "Team ID",
+        "Description"
+      ],
+      "primary-key": "Role ID",
+      "foreign-keys": {
+        "Team ID": "persona/team.csv#Team ID"
+      }
+    },
+    "persona/persona.csv": {
+      "purpose": "The roster of personas (single source of truth for who exists)",
+      "columns": [
+        "Persona ID",
+        "Persona Name",
+        "Role ID",
+        "Team ID",
+        "Status",
+        "Origin",
+        "Persona File"
+      ],
+      "primary-key": "Persona ID",
+      "foreign-keys": {
+        "Role ID": "persona/role.csv#Role ID",
+        "Team ID": "persona/team.csv#Team ID",
+        "Status": "config/persona-status.csv#Status"
+      },
+      "file-ref": "Persona File -> /persona/<team-id>/<persona-id>/<persona-id>.md"
+    },
+    "project/project.csv": {
+      "purpose": "Projects under management, scored and ranked by priority. Priority is a 1..N ordinal (1 = highest); rows are kept sorted by it. Project ID is a stable primary key and is NOT reassigned when priority changes. Seven scoring factors are each 0-10; Total Score (%) is their sum expressed as a percentage of the 70-point maximum (e.g. 54/70 = 77%). Weeks to MVP is raw informational weeks (not part of the score; lower is better) and feeds the cashflow model; Speed to MVP is its 0-10 scored form (fewer weeks = higher).",
+      "columns": [
+        "Priority",
+        "Project ID",
+        "Project Name",
+        "Status",
+        "Target Market",
+        "Pain Intensity",
+        "Revenue Potential",
+        "Strategic Fit (Synergy)",
+        "Moat (Defensibility)",
+        "Autonomy (Zero Ops)",
+        "Ease of Execution",
+        "Speed to MVP",
+        "Weeks to MVP",
+        "Total Score (%)",
+        "Description",
+        "Project Folder"
+      ],
+      "primary-key": "Project ID",
+      "file-ref": "Project Folder -> /project/<project-id>/"
+    },
+    "project/phase.csv": {
+      "purpose": "Phases that decompose a project. Rows are ordered by project priority (per project.csv) then by build sequence within each project. Phase No is a global 1..N ordinal reflecting that order; Phase ID is a stable primary key and is NOT reassigned when order changes.",
+      "columns": [
+        "Phase ID",
+        "Project ID",
+        "Phase No",
+        "Phase Name",
+        "Status",
+        "Description"
+      ],
+      "primary-key": "Phase ID",
+      "foreign-keys": {
+        "Project ID": "project/project.csv#Project ID"
+      }
+    },
+    "project/task.csv": {
+      "purpose": "Actual tasks within a project \u2014 the single dispatch queue (Mensa dispatches only from here; bug.csv is never read in the dispatch loop). Hours is the task's total estimated effort. Task Type classifies the work (Feature / Bug / Chore / Tech Debt); a Bug-type row is the fix-task for a defect recorded in bug.csv and is linked back from that bug's Fix Task ID. Date Started and Date Completed are actuals (ISO dates) stamped by Mensa when a task enters in-progress and done respectively; they pair with task-plan.csv's planned dates for plan-vs-actual velocity.",
+      "columns": [
+        "Task ID",
+        "Project ID",
+        "Phase ID",
+        "Task Name",
+        "Description",
+        "Hours",
+        "Status",
+        "Auto",
+        "Task Type",
+        "Date Started",
+        "Date Completed"
+      ],
+      "primary-key": "Task ID",
+      "foreign-keys": {
+        "Project ID": "project/project.csv#Project ID",
+        "Phase ID": "project/phase.csv#Phase ID",
+        "Status": "config/task-status.csv#Status"
+      }
+    },
+    "project/bug.csv": {
+      "purpose": "Defect register \u2014 the system of record for bugs, owned by Quasar (QA). A bug is a defect record; the work to fix it is a separate Bug-type row in task.csv, linked via Fix Task ID. Kept out of the dispatch loop so the single-table dispatch (task.csv) stays clean. Severity is impact (S1-S4); Status follows bug-status.csv.",
+      "columns": [
+        "Bug ID",
+        "Project ID",
+        "Phase ID",
+        "Title",
+        "Severity",
+        "Status",
+        "Reporter Persona ID",
+        "Assignee Persona ID",
+        "Fix Task ID",
+        "Date Reported",
+        "Date Resolved",
+        "Bug Ref"
+      ],
+      "primary-key": "Bug ID",
+      "foreign-keys": {
+        "Project ID": "project/project.csv#Project ID",
+        "Phase ID": "project/phase.csv#Phase ID",
+        "Severity": "config/bug-severity.csv#Severity",
+        "Status": "config/bug-status.csv#Status",
+        "Reporter Persona ID": "persona/persona.csv#Persona ID",
+        "Assignee Persona ID": "persona/persona.csv#Persona ID",
+        "Fix Task ID": "project/task.csv#Task ID"
+      },
+      "file-ref": "Bug Ref -> optional markdown under /project/<project-id>/bugs/"
+    },
+    "project/dispatch.csv": {
+      "purpose": "Daily ledger of assigned tasks created by the Dispatcher (Mensa) for downstream production personas. Cycle No (1/2/3) records which of the day's three cycle-planning sessions issued the dispatch (Date has no time component, so the cycle cannot otherwise be recovered); it is the dispatch cycle, not necessarily the completion cycle.",
+      "columns": [
+        "Date",
+        "Cycle No",
+        "Task ID",
+        "Assignee Persona ID",
+        "Instructions",
+        "Status"
+      ],
+      "foreign-keys": {
+        "Task ID": "project/task.csv#Task ID",
+        "Assignee Persona ID": "persona/persona.csv#Persona ID"
+      }
+    },
+    "project/task-plan.csv": {
+      "purpose": "Day-by-day execution plan for tasks: bin-packs each task's estimated Hours onto working days (Monday-Friday) from the 2026-07-01 start date, capped at 8 hours per day per stream, with overflow carried to the next working day. Auto tasks (task.csv Auto=TRUE, cleared by the production personas' work cycles per workflow/scheduled-task.csv) and manual tasks (Auto=FALSE, done by the founder) are scheduled on independent 8-hour/day budgets, so a single task can appear in multiple rows (one per day it is worked) and a single date can recur across tasks. Rows are ordered by task priority (task.csv order), highest first.",
+      "columns": [
+        "Task ID",
+        "Date",
+        "Hours"
+      ],
+      "foreign-keys": {
+        "Task ID": "project/task.csv#Task ID"
+      }
+    },
+    "prompt-helper/prompt-helper.csv": {
+      "purpose": "Per-persona prompt library: the initialization prompt, scheduled-task prompt, and export/import prompts for each persona",
+      "columns": [
+        "Persona ID",
+        "Initial Persona",
+        "Scheduled Task",
+        "Export Prompt",
+        "Import Prompt"
+      ],
+      "primary-key": "Persona ID",
+      "foreign-keys": {
+        "Persona ID": "persona/persona.csv#Persona ID"
+      }
+    },
+    "workflow/scheduled-task.csv": {
+      "purpose": "Recurring jobs run by a persona on a cron schedule. Prompt holds the full task prompt executed at trigger time. Rows are sorted by Cron (hour then minute) for readability. Schedule ID is a descriptive kebab-case key (e.g. mensa-weekly-retrospective) that is unique and stable.",
+      "columns": [
+        "Schedule ID",
+        "Persona ID",
+        "Cron",
+        "Action",
+        "Purpose/Description",
+        "Status",
+        "Prompt"
+      ],
+      "primary-key": "Schedule ID",
+      "foreign-keys": {
+        "Persona ID": "persona/persona.csv#Persona ID"
+      }
+    },
+    "cashflow/cashflow.csv": {
+      "purpose": "Weekly cashflow model for the portfolio rollout over 50 weeks, TRANSPOSED: each row is a line item and each column is a week. The first column 'Line Item' is the row key; remaining columns are W01..W50. Line-item rows: 'Week Ending' (date), 'Active Build', then for each project a 3-row block \u2014 '<PID> Accumulative Users' (net active subscribers after churn), '<PID> <Lumino name>' (gross revenue), and '<PID> Product Cost' (that product's Paddle fee + infra increment + prospect-comm increment + one-time domain) \u2014 for PD08/PD07/PD09/PD10/PD02/PD03/PD04, then 'Total Gross Revenue', 'Total Active Users', 'Total Paddle Fees', 'Total Product Cost', 'Shared Overhead (Base Infra + Base Prospect)', 'Net Weekly Cashflow', 'Cumulative Cashflow'. A live formula-driven version with full calculation logic is in cashflow/Lumino-cashflow-model.xlsx (Assumptions / Calc / Model / Monthly sheets). Inputs and results are documented in cashflow/assumption.csv.",
+      "columns": [
+        "Line Item",
+        "W01 \u2026 W50 (one column per week)"
+      ],
+      "primary-key": "Line Item"
+    },
+    "cashflow/assumption.csv": {
+      "purpose": "Key financial and operational assumptions governing the cashflow model",
+      "columns": [
+        "Assumption",
+        "Value",
+        "Description"
+      ],
+      "primary-key": "Assumption"
+    }
+  }
+}

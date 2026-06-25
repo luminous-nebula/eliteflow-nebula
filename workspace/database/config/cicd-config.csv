@@ -1,0 +1,11 @@
+Property,Value
+target-infrastructure,Google Cloud Run
+gcp-project-id,
+delivery-format,Docker Container
+app-scope,Dynamic (On-Demand)
+branching-model,Trunk-Based
+staging-environment,
+credentialing-strategy,GCP Workload Identity Federation
+secrets-management,GCP Secret Manager
+quality-checks,lint|check-types|test
+caching-strategy,Turborepo Action Cache

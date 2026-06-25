@@ -1,0 +1,5 @@
+Severity,Sort Order,Description,Target Response
+S1,1,"Critical — security hole, data loss, prod down, or billing/Paddle mis-charge","Interrupt the current build; fix same cycle"
+S2,2,Major — core feature broken with no workaround,Next dispatch; within ~2 cycles
+S3,3,Minor — feature impaired but a workaround exists,Backlog; batched
+S4,4,"Trivial — cosmetic, copy, or polish",Opportunistic

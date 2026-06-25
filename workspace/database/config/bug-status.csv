@@ -1,0 +1,10 @@
+Status,Sort Order,Description
+new,1,Reported but not yet triaged
+triaged,2,Severity assigned and accepted for fixing
+in-progress,3,Fix being implemented (linked fix-task in task.csv)
+in-review,4,Fix in code review
+verifying,5,Fix under QA verification
+done,6,Fixed and verified; closed
+wont-fix,7,Declined — will not be fixed
+duplicate,8,Duplicate of another bug
+cannot-reproduce,9,Could not be reproduced

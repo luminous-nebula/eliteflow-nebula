@@ -1,0 +1,58 @@
+# ─── EliteFlow Nebula — repository root .gitignore ───────────────────────────
+# Applies to the whole monorepo (app/, workspace/, regent-systemo/, product/).
+
+# ── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+.pnp.*
+.npm/
+.yarn/
+
+# ── Build output / compiled artifacts ────────────────────────────────────────
+dist/
+build/
+out/
+.next/
+release/                  # electron-builder NSIS output (installer/release/)
+*.tsbuildinfo
+
+# ── Env & secrets (NEVER commit) ─────────────────────────────────────────────
+# app/.env holds APP_SECRET + the Claude OAuth token — must stay local.
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Local data / Docker volumes ──────────────────────────────────────────────
+data/
+pgdata/
+
+# ── Electron / electron-builder caches ───────────────────────────────────────
+.cache/
+
+# ── OS / editor cruft ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# ── Project-specific ─────────────────────────────────────────────────────────
+# Temp backups created before editing unversioned (workspace/, regent-systemo/) data.
+_rename-backup-*/
+
+# Generated downstream products — built by the production personas, not tracked here.
+/product/
+
+# Service runtime output (the seed CSVs/instructions under workspace/ ARE tracked).
+/workspace/output/

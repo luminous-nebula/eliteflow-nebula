@@ -1,0 +1,19 @@
+Role ID,Role,Team ID,Description
+orchestrator,Chief Orchestration & Housekeeping,tier-0,Maintains structure hygiene report consolidation and archiving
+executive-consultant,Executive Business Consultant,executive,Independent strategy GTM financial planning and executive review
+gtm-advisor,GTM & Demand-Validation Advisor,revenue,Go-to-market positioning pricing channels and demand-validation experiments
+marketing-lead,Marketing & Market Research,revenue,Market research demand generation and campaigns
+market-researcher,Market Researcher,revenue,Live web research competitor analysis and feature-gap mapping
+brand-lead,Brand & Creative,revenue,Brand identity messaging and creative direction
+sales-lead,Sales & Growth,revenue,Sales pipeline growth and customer discovery
+engineering-manager,Engineering Manager,production,Operational coordination cadence and handoff-chain health
+product-designer,UI/UX Designer,production,Interaction visual and design-system work for product surfaces
+software-engineer,Software Engineer,production,Translates specs into tested production code
+code-reviewer,Code Reviewer,production,Reviews pull requests for correctness security and maintainability
+qa-engineer,Functional & Exploratory QA,production,Test-plan design exploratory testing and release sign-off
+automation-engineer,Automation QA Engineer,production,Automated E2E integration and CI test infrastructure
+devops-engineer,DevOps & Platform Engineer,production,Designs and implements CI/CD pipelines cloud infrastructure and release engineering
+software-architect,Software Architect,production,Designs system architecture API contracts database schemas and technical specifications
+unified-engineer,Unified Engineer,production,Sole developer in the Modern workflow implementing and testing production code end-to-end
+unified-reviewer,Unified Reviewer,production,Reviews code architecture and tests for production readiness in the Modern workflow
+system-steward,System Steward & API Gateway,tier-0,Develops the ElliteFlow platform and APIs and mediates requests — DB updates routing to the right persona and forwarding signed persona responses
