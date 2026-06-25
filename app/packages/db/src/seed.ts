@@ -149,16 +149,27 @@ async function seedTable(spec: TableSpec): Promise<void> {
 
 async function main(): Promise<void> {
   console.log(`Seeding from: ${dbDir}\n`);
+  // Harden the seed: a single table's structural failure (missing/renamed column,
+  // type mismatch, bad CSV) must not abort the rest — collect it and keep going so
+  // every healthy table still seeds. (Per-row integrity violations are already
+  // tolerated inside seedTable; this guards table-level failures.) We still surface a
+  // non-zero exit at the end so the failure is never silent.
+  const failed: Array<{ table: string; message: string }> = [];
   for (const spec of SPECS) {
     try {
       await seedTable(spec);
     } catch (err) {
-      console.error(`✗ fail   ${spec.table}: ${(err as Error).message}`);
-      throw err;
+      failed.push({ table: spec.table, message: (err as Error).message });
+      console.error(`✗ fail   ${spec.table.padEnd(16)} ${(err as Error).message}`);
     }
   }
-  console.log('\nSeed complete.');
   await pool.end();
+  if (failed.length > 0) {
+    console.error(`\nSeed finished with ${failed.length} failed table(s): ${failed.map((f) => f.table).join(', ')}`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log('\nSeed complete.');
 }
 
 main().catch((err) => {
