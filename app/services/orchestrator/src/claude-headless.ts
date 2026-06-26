@@ -24,6 +24,35 @@ export async function credentialEnv(): Promise<Record<string, string>> {
   return env;
 }
 
+/**
+ * Credential-mode guard, run once at startup. CLAUDE_CODE_OAUTH_TOKEN (a Claude
+ * subscription) is the intended backend; ANTHROPIC_API_KEY is the metered, per-token
+ * alternative. To avoid an accidental metered bill from a stray `.env` value, warn loudly
+ * whenever the API key is set — and, when OAUTH_ONLY is enabled, refuse to start so
+ * subscription-only operation is guaranteed.
+ *
+ * Scope: this checks the *env* credential (the likely ".env slip"). A stored DB credential
+ * of kind 'api_key' would also bill per token and takes precedence in credentialEnv(); keep
+ * that table free of api_key rows when running OAuth-only.
+ */
+export function assertCredentialMode(): void {
+  if (!config.anthropicApiKey) return;
+  const oauthOnly = /^(1|true|yes)$/i.test(process.env.OAUTH_ONLY ?? '');
+  const detail = config.oauthToken
+    ? 'CLAUDE_CODE_OAUTH_TOKEN is also set and wins in env resolution, but a stored api_key credential would override it.'
+    : 'No CLAUDE_CODE_OAUTH_TOKEN is set — workers would bill per token.';
+  if (oauthOnly) {
+    throw new Error(
+      `OAUTH_ONLY is enabled but ANTHROPIC_API_KEY is set — refusing to start to avoid metered billing. ` +
+        `Clear ANTHROPIC_API_KEY from the environment. ${detail}`,
+    );
+  }
+  log.warn(
+    `ANTHROPIC_API_KEY is set — this is the metered, per-token credential, not the Claude subscription. ` +
+      `${detail} Clear it, or set OAUTH_ONLY=true to enforce subscription-only.`,
+  );
+}
+
 export interface ClaudeResult {
   /** The assistant's text result (envelope `.result`, or raw stdout as a fallback). */
   result: string;

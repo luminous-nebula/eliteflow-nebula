@@ -3,6 +3,7 @@ import cron from 'node-cron';
 import { pool } from '@eliteflow/db';
 import { runCycle } from './engine.js';
 import { loadWorkCycleSchedules } from './schedules.js';
+import { assertCredentialMode } from './claude-headless.js';
 import { config } from './config.js';
 import { log } from './logger.js';
 
@@ -44,6 +45,7 @@ function scheduleCron(expr: string, scheduleId: string | null, label: string): b
 }
 
 async function main(): Promise<void> {
+  assertCredentialMode(); // warn on metered ANTHROPIC_API_KEY; refuse if OAUTH_ONLY
   let scheduled = 0;
   try {
     const schedules = await loadWorkCycleSchedules();
