@@ -141,6 +141,9 @@ export function buildEnvContent(c: InstallerConfig): string {
     `DATABASE_URL=${databaseUrl(c)}`,
     `CLAUDE_CODE_OAUTH_TOKEN=${c.authKind === 'oauth_token' ? c.oauthToken : ''}`,
     `ANTHROPIC_API_KEY=${c.authKind === 'api_key' ? c.apiKey : ''}`,
+    // Guard: subscription-only installs enforce OAUTH_ONLY so a stray metered key makes the
+    // orchestrator refuse to start; api-key installs leave it blank (metered is intentional).
+    `OAUTH_ONLY=${c.authKind === 'oauth_token' ? 'true' : ''}`,
     `CLAUDE_MODEL=${c.claudeModel}`,
     `WORKSPACE_PATH=${c.workspacePath}`,
     `SOURCE_REPO_PATH=${c.sourceRepoPath}`,
