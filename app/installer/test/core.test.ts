@@ -42,11 +42,15 @@ ok('env api key blank', env.includes('\nANTHROPIC_API_KEY=\n'));
 ok('env antigravity stored', env.includes('\nANTIGRAVITY_TOKEN=ag-xyz\n'));
 ok('env DATABASE_URL', env.includes('postgres://agentflow:pw!secret@postgres:5432/agentflow'));
 ok('env trailing newline', env.endsWith('\n'));
+// oauth installs enforce subscription-only via the OAUTH_ONLY guard.
+ok('env oauth_only enforced', env.includes('\nOAUTH_ONLY=true\n'));
 
 // api_key auth flips which credential line is populated.
 const envApi = buildEnvContent({ ...base, authKind: 'api_key', apiKey: 'sk-ant-1' });
 ok('env api mode key set', envApi.includes('\nANTHROPIC_API_KEY=sk-ant-1\n'));
 ok('env api mode oauth blank', envApi.includes('\nCLAUDE_CODE_OAUTH_TOKEN=\n'));
+// api-key installs must NOT enforce OAUTH_ONLY (else the orchestrator would refuse to start).
+ok('env api mode oauth_only blank', envApi.includes('\nOAUTH_ONLY=\n'));
 
 // extractAppSecret: round-trips the value the installer wrote, ignores other lines.
 ok('extract secret', extractAppSecret('FOO=bar\nAPP_SECRET=abc123\nWEB_PORT=3000') === 'abc123');

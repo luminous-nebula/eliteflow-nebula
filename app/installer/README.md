@@ -55,4 +55,6 @@ npm run dist           # build + electron-builder → release/ (NSIS .exe)
   the control panel reuses the same actions.
 - **Credential capture** — the credential screen spawns `claude setup-token` (browser OAuth)
   and parses the printed token (with a manual-paste fallback), or takes an API key. An
-  optional Antigravity token is stored in `.env` for the future backend.
+  optional Antigravity token is stored in `.env` for the future backend. A subscription
+  (OAuth) install also writes `OAUTH_ONLY=true`, so the orchestrator refuses to start if a
+  metered `ANTHROPIC_API_KEY` later slips into `.env`; API-key installs leave it blank.

@@ -1,4 +1,4 @@
-# EliteFlow Nebula v2
+# EliteFlow Nebula
 
 A containerized service that takes a business idea → requirements → planning → tasks →
 and **builds the selected project**, orchestrating a team of AI **persona** agents through a

@@ -34,6 +34,10 @@ if [ "$AUTH_METHOD" = "2" ]; then
 else
   read -r -p "Claude OAuth token (from claude setup-token): " CLAUDE_CODE_OAUTH_TOKEN || true
 fi
+# Subscription installs enforce OAUTH_ONLY (orchestrator refuses a stray metered key);
+# api-key installs leave it blank so the metered key is allowed.
+OAUTH_ONLY=""
+[ "$AUTH_METHOD" != "2" ] && OAUTH_ONLY="true"
 ask CLAUDE_MODEL    "Claude model" "claude-opus-4-8"
 ask POSTGRES_PASSWORD "Database password" "change-me"
 ask POSTGRES_PORT   "Postgres host port" "5432"
@@ -63,6 +67,7 @@ POSTGRES_PORT=${POSTGRES_PORT}
 DATABASE_URL=${DATABASE_URL}
 CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+OAUTH_ONLY=${OAUTH_ONLY}
 CLAUDE_MODEL=${CLAUDE_MODEL}
 WORKSPACE_PATH=${WORKSPACE_PATH}
 SOURCE_REPO_PATH=${SOURCE_REPO_PATH}
