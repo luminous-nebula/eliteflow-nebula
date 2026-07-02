@@ -60,6 +60,13 @@
   <section id="step-config" class="panel hidden">
     <h2>Configuration</h2>
     <div class="row"><label>Project name<input id="c-projectName" type="text" /></label></div>
+    <div class="grid2">
+      <label>Deployment target
+        <select id="c-deployTarget"><option value="local">Local Docker (Docker Desktop)</option><option value="remote">Remote Docker (over SSH)</option></select>
+      </label>
+      <label>Docker host (remote only)<input id="c-dockerHost" type="text" placeholder="ssh://user@host" /></label>
+    </div>
+    <p id="remote-note" class="note hidden" style="margin:-2px 0 10px">Remote: the workspace/product paths below are paths <b>on the remote host</b>, and those folders must already exist there (sync them first, e.g. via <code>infra/deploy-remote.sh</code>). The dashboard opens at the remote host.</p>
     <div class="pick"><label>Workspace path (instruction/, persona/, database/)<input id="c-workspacePath" type="text" /></label><button class="ghost" id="pick-workspace">Browse…</button></div>
     <div class="pick"><label>Product repo (personas generate/edit here)<input id="c-sourceRepoPath" type="text" /></label><button class="ghost" id="pick-source">Browse…</button></div>
     <div class="grid2">

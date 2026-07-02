@@ -58,3 +58,12 @@ npm run dist           # build + electron-builder → release/ (NSIS .exe)
   optional Antigravity token is stored in `.env` for the future backend. A subscription
   (OAuth) install also writes `OAUTH_ONLY=true`, so the orchestrator refuses to start if a
   metered `ANTHROPIC_API_KEY` later slips into `.env`; API-key installs leave it blank.
+- **Deployment target (local vs remote Docker)** — the config step chooses **Local Docker**
+  (Docker Desktop) or **Remote Docker** over SSH. For remote, enter a `ssh://user@host`
+  Docker host; the installer sets `DOCKER_HOST` on every `docker compose` it spawns (install,
+  control-panel start/stop/clean/logs) and points **Open dashboard** at the remote host. The
+  target + host persist to `.env` (`DEPLOY_TARGET`, `DOCKER_HOST`) so update-mode prefills
+  them. **Caveat:** compose bind-mounts `WORKSPACE_PATH`/`SOURCE_REPO_PATH`, which resolve on
+  the *remote* host — those folders must already exist there. Provision them first with
+  [`infra/deploy-remote.sh`](../infra/deploy-remote.sh) (tars the data dirs over SSH); the GUI
+  then drives the remote daemon and serves as its control panel.

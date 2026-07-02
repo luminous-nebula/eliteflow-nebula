@@ -10,10 +10,15 @@ import { randomBytes } from 'node:crypto';
  */
 
 export type AuthKind = 'oauth_token' | 'api_key';
+export type DeployTarget = 'local' | 'remote';
 
 export interface InstallerConfig {
   projectName: string;
   timezone: string;
+  /** Where the Docker daemon runs: the local Docker Desktop, or a remote engine over SSH. */
+  deployTarget: DeployTarget;
+  /** For deployTarget === 'remote': the docker context, e.g. ssh://user@host. Blank for local. */
+  dockerHost: string;
   workspacePath: string;   // resolved absolute path
   sourceRepoPath: string;  // resolved absolute path
   postgresUser: string;
@@ -44,6 +49,8 @@ export function defaultConfig(): InstallerConfig {
   return {
     projectName: 'EliteFlow Nebula',
     timezone: 'Asia/Bangkok',
+    deployTarget: 'local',
+    dockerHost: '',
     workspacePath: '',
     sourceRepoPath: '',
     postgresUser: 'agentflow',
@@ -82,6 +89,8 @@ export function configFromEnv(env: Record<string, string>, defaults = defaultCon
     ...defaults,
     projectName: env.PROJECT_NAME ?? defaults.projectName,
     timezone: env.TIMEZONE ?? defaults.timezone,
+    deployTarget: env.DEPLOY_TARGET === 'remote' ? 'remote' : 'local',
+    dockerHost: env.DOCKER_HOST ?? defaults.dockerHost,
     workspacePath: env.WORKSPACE_PATH ?? defaults.workspacePath,
     sourceRepoPath: env.SOURCE_REPO_PATH ?? defaults.sourceRepoPath,
     postgresUser: env.POSTGRES_USER ?? defaults.postgresUser,
@@ -152,8 +161,31 @@ export function buildEnvContent(c: InstallerConfig): string {
     `MAX_RUNS_PER_CYCLE=${c.maxRunsPerCycle}`,
     // Captured for a future Antigravity backend; unused by docker-compose today.
     `ANTIGRAVITY_TOKEN=${c.antigravityToken}`,
+    // Installer-only: which daemon to drive. DOCKER_HOST (when remote) is read by the docker
+    // CLI the control panel spawns; the app services ignore both keys.
+    `DEPLOY_TARGET=${c.deployTarget}`,
+    `DOCKER_HOST=${c.deployTarget === 'remote' ? c.dockerHost : ''}`,
   ];
   return lines.join('\n') + '\n';
+}
+
+/** Host portion of an `ssh://[user@]host[:port]` docker context (for the dashboard URL). */
+function remoteHost(dockerHost: string): string {
+  const m = /^ssh:\/\/(?:[^@/\s]+@)?([^:/\s]+)/.exec(dockerHost.trim());
+  return m?.[1] ?? 'localhost';
+}
+
+/** Env overlay for the docker CLI the installer spawns: DOCKER_HOST only for a remote target. */
+export function composeEnv(c: InstallerConfig): Record<string, string> {
+  return c.deployTarget === 'remote' && c.dockerHost.trim()
+    ? { DOCKER_HOST: c.dockerHost.trim() }
+    : {};
+}
+
+/** Where the dashboard lives: the remote host for a remote target, else localhost. */
+export function dashboardUrl(c: InstallerConfig): string {
+  const host = c.deployTarget === 'remote' && c.dockerHost ? remoteHost(c.dockerHost) : 'localhost';
+  return `http://${host}:${c.webPort}`;
 }
 
 export type ComposeAction =
@@ -187,5 +219,8 @@ export function validateConfig(c: InstallerConfig): string[] {
   if (c.authKind === 'oauth_token' && !c.oauthToken.trim()) errs.push('Claude OAuth token is required.');
   if (c.authKind === 'api_key' && !c.apiKey.trim()) errs.push('Anthropic API key is required.');
   if (!c.appSecret.trim()) errs.push('APP_SECRET is missing (internal error).');
+  if (c.deployTarget === 'remote' && !/^ssh:\/\/[^@/\s]+@[^:/\s]+/.test(c.dockerHost.trim())) {
+    errs.push('Remote target needs a Docker host like ssh://user@host.');
+  }
   return errs;
 }
