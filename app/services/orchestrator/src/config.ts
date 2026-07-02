@@ -23,6 +23,11 @@ export const config = {
    *  Off by default — the deterministic dispatch read is the planner and the fallback. */
   mensaPlanning: /^(1|true|yes)$/i.test(process.env.MENSA_PLANNING ?? ''),
 
+  /** Opt-in: let LLM-Mensa pick the role for a founder message in the medium (the
+   *  documented router.ts seam). Off by default — the keyword map routes and is the
+   *  fallback on any LLM failure. */
+  llmRouter: /^(1|true|yes)$/i.test(process.env.LLM_ROUTER ?? ''),
+
   /** When true, workers return a synthetic report instead of invoking Claude Code.
    *  Lets the engine + DB be exercised without the API/CLI. */
   dryRun: /^(1|true|yes)$/i.test(process.env.ORCHESTRATOR_DRY_RUN ?? ''),
