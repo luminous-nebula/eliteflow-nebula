@@ -1,13 +1,15 @@
 import { query } from '@eliteflow/db';
+import { routeViaLlm } from './llm-router.js';
 
 /**
- * The router decides which persona should answer a founder message. This is the
- * deterministic "role/keyword map first" stage (ADR-0002 D2 / workstream C); an LLM
- * router can later replace `scoreRoles` without changing the rest of the medium.
+ * The router decides which persona should answer a founder message. The deterministic
+ * "role/keyword map" stage (ADR-0002 D2 / workstream C) is the default; when LLM_ROUTER
+ * is enabled, LLM-Mensa picks the role first (see llm-router.ts) and the keyword map
+ * remains the fallback on any failure.
  *
- * A keyword match yields a role; the role is resolved to a live, active persona from
- * the DB (so the map never points at a retired or renamed persona). When nothing
- * matches, the request falls back to the executive consultant as a general triage.
+ * A chosen role is resolved to a live, active persona from the DB (so the map never
+ * points at a retired or renamed persona). When nothing matches, the request falls
+ * back to the executive consultant as a general triage.
  */
 
 export interface RouteResult {
@@ -58,10 +60,19 @@ async function activePersonaForRole(roleId: string): Promise<string | null> {
 }
 
 /**
- * Route a founder message to a persona. Tries the keyword map, then the fallback
- * role, then — if even that role has no active persona — any active persona.
+ * Route a founder message to a persona. Tries LLM-Mensa first (opt-in, LLM_ROUTER),
+ * then the keyword map, then the fallback role, then — if even that role has no
+ * active persona — any active persona.
  */
 export async function route(text: string): Promise<RouteResult> {
+  const llm = await routeViaLlm(text); // null unless enabled AND it produced a valid role
+  if (llm) {
+    const personaId = await activePersonaForRole(llm.role);
+    if (personaId) {
+      return { personaId, role: llm.role, reason: `llm${llm.reason ? ` (${llm.reason})` : ''} → ${llm.role}` };
+    }
+  }
+
   const scored = scoreRoles(text);
   if (scored) {
     const personaId = await activePersonaForRole(scored.role);

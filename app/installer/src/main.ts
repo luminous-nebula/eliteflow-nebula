@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import {
   buildEnvContent, configFromEnv, defaultConfig, parseEnv, validateConfig, extractClaudeToken,
-  composeArgs, generateAppSecret, type InstallerConfig, type ComposeAction,
+  composeArgs, composeEnv, dashboardUrl, generateAppSecret, type InstallerConfig, type ComposeAction,
 } from './core.js';
 
 const execFileAsync = promisify(execFile);
@@ -41,14 +41,16 @@ function defaultAppDir(): string {
 const composeFileFor = (appDir: string): string => join(appDir, 'infra', 'docker-compose.yml');
 const envPathFor = (appDir: string): string => join(appDir, '.env');
 
-/** Spawn a command, streaming stdout/stderr lines to the renderer over `channel`. */
+/** Spawn a command, streaming stdout/stderr lines to the renderer over `channel`.
+ *  `env` overlays process.env — used to set DOCKER_HOST for a remote target. */
 function runStreaming(
-  channel: string, cmd: string, args: string[], cwd: string,
+  channel: string, cmd: string, args: string[], cwd: string, env: Record<string, string> = {},
 ): Promise<{ ok: boolean; code: number | null }> {
   return new Promise((resolvePromise) => {
     const send = (line: string): void => mainWindow?.webContents.send(channel, line);
-    send(`$ ${cmd} ${args.join(' ')}`);
-    const child = spawn(cmd, args, { cwd, shell: process.platform === 'win32' });
+    const hostNote = env.DOCKER_HOST ? ` (DOCKER_HOST=${env.DOCKER_HOST})` : '';
+    send(`$ ${cmd} ${args.join(' ')}${hostNote}`);
+    const child = spawn(cmd, args, { cwd, shell: process.platform === 'win32', env: { ...process.env, ...env } });
     child.stdout.on('data', (d) => send(d.toString()));
     child.stderr.on('data', (d) => send(d.toString()));
     child.on('error', (err) => { send(`ERROR: ${err.message}`); resolvePromise({ ok: false, code: null }); });
@@ -56,9 +58,10 @@ function runStreaming(
   });
 }
 
-async function dockerStatus(): Promise<{ ok: boolean; version?: string; error?: string }> {
+async function dockerStatus(dockerHost?: string): Promise<{ ok: boolean; version?: string; error?: string }> {
   try {
-    const { stdout } = await execFileAsync('docker', ['version', '--format', '{{.Server.Version}}']);
+    const env = dockerHost ? { ...process.env, DOCKER_HOST: dockerHost } : process.env;
+    const { stdout } = await execFileAsync('docker', ['version', '--format', '{{.Server.Version}}'], { env });
     return { ok: true, version: stdout.trim() };
   } catch (err) {
     return { ok: false, error: (err as Error).message };
@@ -96,7 +99,7 @@ app.whenReady().then(() => {
     name: app.getName(), version: app.getVersion(),
     platform: process.platform, electron: process.versions.electron,
   }));
-  ipcMain.handle('installer:dockerStatus', () => dockerStatus());
+  ipcMain.handle('installer:dockerStatus', (_e, dockerHost?: string) => dockerStatus(dockerHost));
   ipcMain.handle('installer:defaultAppDir', () => defaultAppDir());
   ipcMain.handle('installer:detectEnv', (_e, appDir: string) => detectEnv(appDir));
 
@@ -115,26 +118,28 @@ app.whenReady().then(() => {
     }
     const cfg = { ...config, appSecret: config.appSecret || generateAppSecret() };
     writeFileSync(envPathFor(appDir), buildEnvContent(cfg), 'utf8');
-    const r = await runStreaming('installer:composeLog', 'docker', composeArgs('up', composeFileFor(appDir)), appDir);
+    const r = await runStreaming('installer:composeLog', 'docker', composeArgs('up', composeFileFor(appDir)), appDir, composeEnv(cfg));
     return { ok: r.ok, code: r.code, errors: [] as string[] };
   });
 
-  ipcMain.handle('installer:compose', (_e, action: ComposeAction, appDir: string) =>
-    runStreaming('installer:composeLog', 'docker', composeArgs(action, composeFileFor(appDir)), appDir));
+  ipcMain.handle('installer:compose', (_e, action: ComposeAction, appDir: string, dockerHost?: string) =>
+    runStreaming('installer:composeLog', 'docker', composeArgs(action, composeFileFor(appDir)), appDir,
+      dockerHost ? { DOCKER_HOST: dockerHost } : {}));
 
-  ipcMain.handle('installer:logs', async (_e, appDir: string, tail: number) => {
+  ipcMain.handle('installer:logs', async (_e, appDir: string, tail: number, dockerHost?: string) => {
     try {
+      const env = dockerHost ? { ...process.env, DOCKER_HOST: dockerHost } : process.env;
       const { stdout, stderr } = await execFileAsync(
         'docker', ['compose', '-f', composeFileFor(appDir), 'logs', '--tail', String(tail)],
-        { cwd: appDir, maxBuffer: 10 * 1024 * 1024 });
+        { cwd: appDir, env, maxBuffer: 10 * 1024 * 1024 });
       return { ok: true, text: stdout || stderr };
     } catch (err) {
       return { ok: false, text: (err as Error).message };
     }
   });
 
-  ipcMain.handle('installer:openDashboard', (_e, webPort: string) =>
-    shell.openExternal(`http://localhost:${webPort}`));
+  ipcMain.handle('installer:openDashboard', (_e, config: InstallerConfig) =>
+    shell.openExternal(dashboardUrl(config)));
 
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });

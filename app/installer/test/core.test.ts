@@ -1,6 +1,6 @@
 import {
   buildEnvContent, extractAppSecret, generateAppSecret, databaseUrl, composeArgs, validateConfig,
-  defaultConfig, parseEnv, configFromEnv, extractClaudeToken,
+  defaultConfig, parseEnv, configFromEnv, extractClaudeToken, composeEnv, dashboardUrl,
   type InstallerConfig,
 } from '../src/core.js';
 
@@ -14,6 +14,8 @@ function ok(name: string, cond: boolean): void {
 const base: InstallerConfig = {
   projectName: 'EliteFlow Nebula',
   timezone: 'Asia/Bangkok',
+  deployTarget: 'local',
+  dockerHost: '',
   workspacePath: 'C:\\ef\\workspace',
   sourceRepoPath: 'C:\\ef\\product',
   postgresUser: 'agentflow',
@@ -51,6 +53,26 @@ ok('env api mode key set', envApi.includes('\nANTHROPIC_API_KEY=sk-ant-1\n'));
 ok('env api mode oauth blank', envApi.includes('\nCLAUDE_CODE_OAUTH_TOKEN=\n'));
 // api-key installs must NOT enforce OAUTH_ONLY (else the orchestrator would refuse to start).
 ok('env api mode oauth_only blank', envApi.includes('\nOAUTH_ONLY=\n'));
+
+// --- Deployment target (local vs remote Docker) ---
+ok('default target local', defaultConfig().deployTarget === 'local' && defaultConfig().dockerHost === '');
+// local: no DOCKER_HOST overlay, blank DOCKER_HOST line, localhost dashboard.
+ok('local composeEnv empty', Object.keys(composeEnv(base)).length === 0);
+ok('local env DOCKER_HOST blank', env.includes('\nDOCKER_HOST=\n') && env.includes('\nDEPLOY_TARGET=local\n'));
+ok('local dashboard localhost', dashboardUrl(base) === 'http://localhost:3000');
+// remote: DOCKER_HOST overlay + env line, dashboard points at the remote host, validate ok.
+const remote: InstallerConfig = { ...base, deployTarget: 'remote', dockerHost: 'ssh://agent@192.168.1.120' };
+ok('remote composeEnv set', composeEnv(remote).DOCKER_HOST === 'ssh://agent@192.168.1.120');
+const envR = buildEnvContent(remote);
+ok('remote env DOCKER_HOST written', envR.includes('\nDEPLOY_TARGET=remote\n') && envR.includes('\nDOCKER_HOST=ssh://agent@192.168.1.120\n'));
+ok('remote dashboard host', dashboardUrl(remote) === 'http://192.168.1.120:3000');
+ok('remote valid ok', validateConfig(remote).length === 0);
+ok('remote needs host', validateConfig({ ...base, deployTarget: 'remote', dockerHost: '' }).some((e) => /Docker host/.test(e)));
+ok('remote rejects bad host', validateConfig({ ...base, deployTarget: 'remote', dockerHost: 'agent@host' }).some((e) => /Docker host/.test(e)));
+// round-trip: DEPLOY_TARGET/DOCKER_HOST survive parse → configFromEnv.
+const rtR = configFromEnv(parseEnv(envR));
+ok('remote round-trips', rtR.deployTarget === 'remote' && rtR.dockerHost === 'ssh://agent@192.168.1.120');
+ok('local round-trips', configFromEnv(parseEnv(env)).deployTarget === 'local');
 
 // extractAppSecret: round-trips the value the installer wrote, ignores other lines.
 ok('extract secret', extractAppSecret('FOO=bar\nAPP_SECRET=abc123\nWEB_PORT=3000') === 'abc123');
